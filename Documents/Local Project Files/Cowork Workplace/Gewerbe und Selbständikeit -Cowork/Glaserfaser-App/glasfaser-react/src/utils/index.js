@@ -1,4 +1,3 @@
-export * from './createElement';
-export * from './snapUtils';
-export * from './hitDetection';
-export * from './exportUtils';
+export { createElement } from './createElement';
+export { getElementAtPoint, getElementCenter, isPointInPolygon } from './hitDetection';
+export { findSnapPoint, getAlignmentSnap } from './snapUtils';
