@@ -11,7 +11,7 @@ export default function Header({ address, onAddressChange, onUpload, onExportZip
     <header style={styles.header}>
       <div style={styles.title}>
         <span style={{ fontSize: 19 }}>🌐</span>
-        <span>Glasfaser v9.0</span>
+        <span>Glasfaser v8.0</span>
       </div>
 
       <div style={styles.addressWrap}>

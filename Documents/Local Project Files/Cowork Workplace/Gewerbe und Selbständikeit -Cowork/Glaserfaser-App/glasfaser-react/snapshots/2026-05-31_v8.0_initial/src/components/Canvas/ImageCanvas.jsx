@@ -33,7 +33,6 @@ export default function ImageCanvas({
   onUndo,
   onDelete,
   onCopyElement,
-  onDeletePolylineSegment,
   // Lasso (F3-03)
   lassoMode,
   lassoPath,
@@ -182,12 +181,6 @@ export default function ImageCanvas({
       if (!isText && pointerType !== 'pen') {
         setSelectedIdx(-1); hideOverlay(); return;
       }
-      // F4-05: Segment-Löschen
-      if (hit.part && hit.part.startsWith('segdel_')) {
-        const segIdx = parseInt(hit.part.split('_')[1]);
-        if (onDeletePolylineSegment) onDeletePolylineSegment(imageData.id, hit.index, segIdx);
-        return;
-      }
       onPushHistory(imageData.id);
       setSelectedIdx(hit.index);
       setIsDragging(true);
@@ -279,15 +272,6 @@ export default function ImageCanvas({
   const handlePointerUp = useCallback((e) => {
     const nativeEvt = e.evt;
     const pointerType = nativeEvt?.pointerType || 'pen';
-
-    // F4-07: Drag-to-draw — letzten Punkt beim Heben setzen
-    if (pencilMode && pencilMode.imageId === imageData.id && pointerType === 'pen') {
-      const pos = toCanvas(e);
-      const lastPt = pencilMode.points[pencilMode.points.length - 1];
-      if (lastPt && Math.hypot(pos.x - lastPt.x, pos.y - lastPt.y) > 15) {
-        onAddPencilPoint(pos);
-      }
-    }
 
     // LASSO ABSCHLIESSEN (F3-03)
     if (lassoMode && pointerType === 'pen') {
@@ -450,42 +434,19 @@ function renderElement(elem, isSelected, key) {
         </>}
       </React.Fragment>
     );
-    case 'line_circle': {
-      // F4-08: Linie endet am Kreisrand
-      const angle = Math.atan2(elem.y2 - elem.y1, elem.x2 - elem.x1);
-      const lEx = elem.x2 - elem.circleRadius * Math.cos(angle);
-      const lEy = elem.y2 - elem.circleRadius * Math.sin(angle);
-      return (
+    case 'line_circle': return (
       <React.Fragment key={key}>
-        <Line points={[elem.x1,elem.y1,lEx,lEy]} stroke={elem.color} strokeWidth={elem.lineWidth} lineCap="round"/>
+        <Line points={[elem.x1,elem.y1,elem.x2,elem.y2]} stroke={elem.color} strokeWidth={elem.lineWidth} lineCap="round"/>
         <Circle x={elem.x2} y={elem.y2} radius={elem.circleRadius} stroke={elem.circleColor} strokeWidth={elem.lineWidth} fill="transparent"/>
         {isSelected && <>
           <Circle x={elem.x1} y={elem.y1} radius={HR} fill="#34C759" stroke="white" strokeWidth={3}/>
           <Circle x={elem.x2} y={elem.y2} radius={HR} fill="#007AFF" stroke="white" strokeWidth={3}/>
         </>}
       </React.Fragment>
-    );}
-    case 'polyline': {
-      const pts = elem.points || [];
-      // F4-05: Segment-Midpoint Minus-Marker
-      const segMarkers = isSelected ? pts.slice(0,-1).map((p,i) => ({
-        x:(p.x+pts[i+1].x)/2, y:(p.y+pts[i+1].y)/2, i
-      })) : [];
-      return (
-        <React.Fragment key={key}>
-          <Line points={pts.flatMap(p=>[p.x,p.y])} stroke={elem.color} strokeWidth={elem.lineWidth} lineCap="round" lineJoin="round"/>
-          {isSelected && pts.map((p,i) => (
-            <Circle key={i} x={p.x} y={p.y} radius={HR} fill="#007AFF" stroke="white" strokeWidth={3}/>
-          ))}
-          {segMarkers.map(({x,y,i}) => (
-            <React.Fragment key={`seg${i}`}>
-              <Circle x={x} y={y} radius={14} fill="#FF3B30" stroke="white" strokeWidth={2}/>
-              <Text x={x-8} y={y-10} text="−" fontSize={20} fill="white" fontStyle="bold"/>
-            </React.Fragment>
-          ))}
-        </React.Fragment>
-      );
-    }
+    );
+    case 'polyline': return (
+      <Line key={key} points={elem.points?.flatMap(p=>[p.x,p.y])??[]} stroke={elem.color} strokeWidth={elem.lineWidth} lineCap="round" lineJoin="round"/>
+    );
     case 'circle': return (
       <React.Fragment key={key}>
         <Circle x={elem.x} y={elem.y} radius={elem.radius} stroke={elem.color} strokeWidth={elem.lineWidth} fill="transparent"/>

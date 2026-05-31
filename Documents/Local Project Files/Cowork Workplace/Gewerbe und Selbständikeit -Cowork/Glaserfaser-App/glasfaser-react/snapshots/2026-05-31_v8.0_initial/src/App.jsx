@@ -1,5 +1,5 @@
 /**
- * Glasfaser Hausbegehung App — React v9.0
+ * Glasfaser Hausbegehung App — React v8.0
  *
  * F3-01: Gebäude-Labels Nullpunkt-System
  * F3-02: Keller immer 2 Labels (99S1, 99S2)
@@ -238,24 +238,6 @@ export default function App() {
     setSelectedGroup([]); setLassoPath([]); setShowGroupOverlay(false);
   }, [selectedGroup, images, pushHistory, updateImage]);
 
-  // F4-05: Polyline-Segment löschen
-  const deletePolylineSegment = useCallback((imageId, elemIndex, segIndex) => {
-    const img = images.find(i => i.id === imageId);
-    if (!img) return;
-    pushHistory(imageId);
-    updateImage(imageId, im => {
-      const elems = [...im.elements];
-      const elem = elems[elemIndex];
-      if (!elem || elem.type !== 'polyline') return im;
-      const partA = elem.points.slice(0, segIndex + 1);
-      const partB = elem.points.slice(segIndex + 1);
-      elems.splice(elemIndex, 1);
-      if (partA.length >= 2) elems.splice(elemIndex, 0, { ...elem, points: partA });
-      if (partB.length >= 2) elems.push({ ...elem, points: partB });
-      return { ...im, elements: elems };
-    });
-  }, [images, pushHistory, updateImage]);
-
   // F3-08: Copy einzelnes Element
   const copyElement = useCallback((imageId, elemIndex) => {
     const img = images.find(i => i.id === imageId);
@@ -320,8 +302,8 @@ export default function App() {
     const fontSize = Math.max(18, img.image.width / 60);
     const cx = img.image.width / 2;
     const cy = img.image.height / 2;
-    const hGap = Math.round(fontSize * 7.0); // F4-03: doppelt so weit
-    const vGap = Math.round(fontSize * 3.6);
+    const hGap = Math.round(fontSize * 3.5);
+    const vGap = Math.round(fontSize * 1.8);
 
     // Nullpunkt = EG, Spalte 0
     const nullX = Math.round(cx - (aptsPerFloor - 1) * hGap / 2);
@@ -377,33 +359,37 @@ export default function App() {
   }, [activeImageId, images, pushHistory, updateImage, activeBuildingGroupId]);
 
   // F3-01: Abstände anpassen (Nullpunkt-System)
-  // F4-02: Delta auf aktuelle Positionen — individuelle Moves bleiben erhalten
   const adjustBuildingSpacing = useCallback((axis, direction, isLarge) => {
     if (!activeBuildingGroupId) return;
     const imgId = activeImageId || (images.length > 0 ? images[0].id : null);
     if (!imgId) return;
+    const img = images.find(i => i.id === imgId);
+    if (!img) return;
     const gd = buildingGroupDataRef.current[activeBuildingGroupId];
     if (!gd) return;
+
     const step = Math.round(gd.fontSize * (isLarge ? 1.2 : 0.3));
-    const oldHGap = gd.hGap, oldVGap = gd.vGap;
+
     if (axis === 'h') {
       gd.hGap = Math.max(Math.round(gd.fontSize * 1.5), gd.hGap + direction * step);
     } else {
       gd.vGap = Math.max(Math.round(gd.fontSize * 1.0), gd.vGap + direction * step);
     }
-    const deltaH = gd.hGap - oldHGap;
-    const deltaV = gd.vGap - oldVGap;
+
     updateImage(imgId, im => ({
       ...im,
       elements: im.elements.map(e => {
         if (e.buildingGroupId !== activeBuildingGroupId) return e;
         const col = e.buildingCol || 0;
-        if (axis === 'h' && col > 0) return { ...e, x: Math.round(e.x + col * deltaH) };
-        if (axis === 'v' && e.buildingRow === 'og') return { ...e, y: Math.round(e.y - (e.buildingFloor||0) * deltaV) };
-        return e;
+        const x = Math.round(gd.nullX + col * gd.hGap);
+        let y;
+        if (e.buildingRow === 'eg')     y = gd.nullY;
+        else if (e.buildingRow==='keller') y = Math.round(gd.nullY + gd.vGap);
+        else y = Math.round(gd.nullY - (e.buildingFloor||0) * gd.vGap);
+        return { ...e, x, y };
       })
     }));
-  }, [activeBuildingGroupId, activeImageId, updateImage]);
+  }, [activeBuildingGroupId, activeImageId, images, updateImage]);
 
   // Gebäude-Gruppe sperren
   const finalizeBuildingLabels = useCallback(() => {
@@ -496,7 +482,6 @@ export default function App() {
               onUndo={undoLast}
               onDelete={deleteImage}
               onCopyElement={copyElement}
-              onDeletePolylineSegment={deletePolylineSegment}
               lassoMode={lassoMode}
               lassoPath={lassoPath}
               lassoImageId={lassoImageId}

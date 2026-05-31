@@ -148,15 +148,13 @@ export default function Toolbar({
         <div style={styles.sectionTitle}>Gebäude-Labels</div>
         <div style={styles.buildingRow}>
           <span style={styles.buildingLabel}>Etagen:</span>
-          <select value={floors} onChange={e => setFloors(Number(e.target.value))} style={{...styles.spinner,cursor:'pointer'}}>
-          {[...Array(16)].map((_,i)=><option key={i} value={i}>{i}</option>)}
-        </select>
+          <input type="number" min={0} max={10} value={floors}
+            onChange={e => setFloors(Number(e.target.value))} style={styles.spinner}/>
         </div>
         <div style={{ ...styles.buildingRow, marginTop:4 }}>
           <span style={styles.buildingLabel}>Whg./Etage:</span>
-          <select value={apts} onChange={e => setApts(Number(e.target.value))} style={{...styles.spinner,cursor:'pointer'}}>
-            {[...Array(10)].map((_,i)=><option key={i+1} value={i+1}>{i+1}</option>)}
-          </select>
+          <input type="number" min={1} max={10} value={apts}
+            onChange={e => setApts(Number(e.target.value))} style={styles.spinner}/>
         </div>
         <button style={styles.insertBtn} onClick={() => onInsertBuildingLabels(floors, apts)}>
           🏢 Labels einfügen

@@ -54,11 +54,11 @@ export function createElement(type, canvasWidth, canvasHeight) {
     text_zu_eg:            { text:'Zu EG' },
     text_zu_1og:           { text:'Zu 1.OG' },
     text_zu_2og:           { text:'Zu 2.OG' },
-    text_zu_treppe:        { text:'Zum Treppenhaus' },
-    text_linke_kamine:     { text:'Linke Kamine' },
-    text_rechte_kamine:    { text:'Rechte Kamine' },
-    text_zu_linke_kamine:  { text:'Zu linke Kamine' },
-    text_zu_rechte_kamine: { text:'Zu rechte Kamine' },
+    text_zu_treppe:        { text:'Treppe' },
+    text_linke_kamine:     { text:'L. Kamine' },
+    text_rechte_kamine:    { text:'R. Kamine' },
+    text_zu_linke_kamine:  { text:'Zu L.K.' },
+    text_zu_rechte_kamine: { text:'Zu R.K.' },
     text_baugleich:        { text:'Baugleich' },
   };
   Object.entries(LABELS).forEach(([id, { text }]) => {
